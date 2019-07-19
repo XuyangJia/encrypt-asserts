@@ -2,11 +2,9 @@ const path = require('path')
 const fse = require('fs-extra')
 const { encryptFile, decryptFile, aesEncrypt } = require('../lib/cryptoUtils')
 const shuffle = require('../lib/shuffle')
-const { algorithm, encryptKey, iv, inputDir, outputDir, decryptDir, namesFile, nameLib1, nameLib2, confusionRatio, renameIgnore } = fse.readJSONSync('./encrypt_cfg.json')
+const { algorithm, encryptKey, iv, inputDir, outputDir, decryptDir, namesFile, nameLib1, nameLib2, confusionRatio, renameIgnore, versionFile, fakePngExt } = fse.readJSONSync('./encrypt_cfg.json')
 const sourceDir = path.resolve(inputDir)
 const encryptedDir = path.resolve(outputDir)
-const versionFileName = 'version.json'
-const fakePngExt = '.zzz'
 let suffix = Date.now()
 let encryptNames = []
 
@@ -42,7 +40,7 @@ function insertConfusionFiles (names) {
  * 加密资源
  */
 function encryptAsserts () {
-  const versionObj = fse.readJSONSync(path.resolve(sourceDir, versionFileName))
+  const versionObj = fse.readJSONSync(path.resolve(sourceDir, versionFile))
   fse.emptyDirSync(encryptedDir)
   Object.keys(versionObj).forEach(key => {
     const src = path.resolve(sourceDir, versionObj[key])
@@ -62,7 +60,7 @@ function encryptAsserts () {
     }
   })
 
-  const versionName = getRandName('.json')
+  const versionName = getRandName(path.extname(versionFile))
   encryptNames.unshift(versionName)
   fse.outputFileSync(path.resolve(encryptedDir, versionName), aesEncrypt(JSON.stringify(versionObj), algorithm, encryptKey, iv))
   fse.outputFileSync(path.resolve(encryptedDir, namesFile), aesEncrypt(JSON.stringify(encryptNames), algorithm, encryptKey, iv))
@@ -84,7 +82,7 @@ function decryptAsserts () {
     const decrypted = decryptFile(src, algorithm, encryptKey, iv)
     fse.outputFileSync(dest, decrypted)
   })
-  const versionFP = path.resolve(decryptDir, versionFileName)
+  const versionFP = path.resolve(decryptDir, versionFile)
   fse.renameSync(path.resolve(decryptDir, encryptNames[0]), versionFP)
 }
 
