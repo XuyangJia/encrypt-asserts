@@ -8,8 +8,8 @@ program
   // .option('-s, --template-engine [engine]', 'Add template [engine] support', 'jade')
   .on('--help', function () {
     console.log('\nExamples:')
-    console.log('  $ npm start -e')
-    console.log('  $ npm start -d')
+    console.log('  $ node index.js -e')
+    console.log('  $ node index.js -d')
   })
   .parse(process.argv)
 
