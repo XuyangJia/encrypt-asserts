@@ -39,7 +39,7 @@ function insertConfusionFiles (names) {
 /**
  * 加密资源
  */
-function encryptAsserts () {
+function encryptFiles () {
   const versionObj = fse.readJSONSync(path.resolve(sourceDir, versionFile))
   fse.emptyDirSync(encryptedDir)
   Object.keys(versionObj).forEach(key => {
@@ -71,7 +71,7 @@ function encryptAsserts () {
 /**
  * 解密还原
  */
-function decryptAsserts () {
+function decryptFiles () {
   fse.emptyDirSync(decryptDir)
   encryptNames = JSON.parse(decryptFile(path.resolve(encryptedDir, namesFile), algorithm, encryptKey, iv).toString())
   encryptNames.forEach(name => {
@@ -97,7 +97,7 @@ function encryptSingleFile (oldPath, newPath) {
 }
 
 module.exports = {
-  encryptAsserts,
-  decryptAsserts,
+  encryptFiles,
+  decryptFiles,
   encryptSingleFile
 }

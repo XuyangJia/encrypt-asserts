@@ -1,5 +1,5 @@
 const program = require('commander')
-const { encryptAsserts, decryptAsserts } = require('./src/assertsHandler')
+const { encryptFiles, decryptFiles } = require('./src/encryptHelper')
 program
   .version('1.0.0')
   .description('Encrypt and decrypt asserts.')
@@ -13,5 +13,5 @@ program
   })
   .parse(process.argv)
 
-program.encrypt && encryptAsserts()
-program.decrypt && decryptAsserts()
+program.encrypt && encryptFiles()
+program.decrypt && decryptFiles()
