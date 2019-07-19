@@ -1,13 +1,17 @@
 {
   "name": "encrypt-asserts",
   "version": "1.0.0",
+  "private": true,
   "scripts": {
     "start": "node index.js -e",
-    "test": "node  test.js",
+    "test": "node ./test/index.js",
     "fix": "standard --fix"
   },
   "license": "MIT",
-  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/XuyangJia/encrypt-asserts.git"
+  },
   "dependencies": {
     "commander": "^2.20.0",
     "fs-extra": "^8.1.0"

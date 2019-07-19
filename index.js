@@ -3,11 +3,10 @@ const { encryptAsserts, decryptAsserts } = require('./src/assertsHandler')
 program
   .version('1.0.0')
   .option('-e, --encrypt', '加密资源。')
-  .option('-d, --decrypt', '解密资源。')
-  .option('-t, --template-engine [engine]', 'Add template [engine] support', 'jade')
+  .option('-d, --decrypt', '解密资源')
+  .option('-s, --template-engine [engine]', 'Add template [engine] support', 'jade') // test
   .on('--help', function () {
-    console.log('')
-    console.log('Examples:')
+    console.log('\nExamples:')
     console.log('  $ npm start -e')
     console.log('  $ npm start -d')
   })

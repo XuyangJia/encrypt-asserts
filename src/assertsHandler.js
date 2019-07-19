@@ -9,6 +9,11 @@ const versionFileName = 'version.json'
 let suffix = Date.now()
 let encryptNames = []
 
+/**
+ * 根据扩展名获取新的文件名
+ * @param {String} ext 扩展名
+ * @return {String} 新的文件名
+ */
 function getRandName (ext) {
   suffix += 10 ** 10 // 修改后缀
   const rand1 = Math.floor(Math.random() * nameLib1.length)
@@ -16,7 +21,10 @@ function getRandName (ext) {
   return `${nameLib1[rand1]}_${nameLib2[rand2]}_${suffix.toString(36)}${ext}`
 }
 
-// 插入混淆文件
+/**
+ * 插入混淆文件
+ * @param {Array} names 插入混淆文件的参考文件
+ */
 function insertConfusionFiles (names) {
   names = shuffle(names).slice(0, Math.floor(names.length * confusionRatio))
   names.forEach(name => {
@@ -29,7 +37,9 @@ function insertConfusionFiles (names) {
   })
 }
 
-// 加密资源
+/**
+ * 加密资源
+ */
 function encryptAsserts () {
   const versionObj = fse.readJSONSync(path.resolve(sourceDir, versionFileName))
   fse.emptyDirSync(encryptedDir)
@@ -54,10 +64,12 @@ function encryptAsserts () {
   insertConfusionFiles(encryptNames)
 }
 
-// 解密还原
+/**
+ * 解密还原
+ */
 function decryptAsserts () {
   fse.emptyDirSync(decryptDir)
-  encryptNames = fse.readJSONSync(path.resolve(encryptedDir, namesFile))
+  encryptNames = JSON.parse(decryptFile(path.resolve(encryptedDir, namesFile), algorithm, encryptKey, iv).toString())
   encryptNames.forEach(name => {
     const src = path.resolve(encryptedDir, name)
     const dest = path.resolve(decryptDir, name)
@@ -71,7 +83,18 @@ function decryptAsserts () {
   // console.log(versionObj)
 }
 
+/**
+ * 加密单个文件
+ * @param {String} oldPath 待加密文件位置
+ * @param {String} newPath 加密后文件位置
+ */
+function encryptSingleFile (oldPath, newPath) {
+  const encrypted = encryptFile(oldPath, algorithm, encryptKey, iv)
+  fse.outputFileSync(newPath, encrypted)
+}
+
 module.exports = {
   encryptAsserts,
-  decryptAsserts
+  decryptAsserts,
+  encryptSingleFile
 }
