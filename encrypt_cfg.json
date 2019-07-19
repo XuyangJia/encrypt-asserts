@@ -1,0 +1,12 @@
+{
+    "algorithm": "aes-128-cbc",
+    "encryptKey": "4e4168d79181dfd2",
+    "iv": "0123456789ABCDEF",
+    "inputDir": "../release/web66",
+    "outputDir": "../release/web67",
+    "decryptDir": "../release/web68",
+    "namesFile": "cfg",
+    "nameLib1": ["apple", "banana", "strawberry", "blueberry", "cherry", "chestnut", "coconut", "pear", "pineapple"],
+    "nameLib2":["cranberry", "durian", "fig", "peach", "grape", "lemon", "longan", "mango", "melon", "orange", "papaya"],
+    "confusionRatio": 0.35
+}

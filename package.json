@@ -2,12 +2,14 @@
   "name": "encrypt-asserts",
   "version": "1.0.0",
   "scripts": {
-    "start": "node index.js",
+    "start": "node index.js -e",
+    "test": "node  test.js",
     "fix": "standard --fix"
   },
   "license": "MIT",
   "private": true,
   "dependencies": {
+    "commander": "^2.20.0",
     "fs-extra": "^8.1.0"
   }
 }
