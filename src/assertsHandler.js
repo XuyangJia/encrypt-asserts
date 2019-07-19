@@ -46,18 +46,20 @@ function encryptAsserts () {
   fse.emptyDirSync(encryptedDir)
   Object.keys(versionObj).forEach(key => {
     const src = path.resolve(sourceDir, versionObj[key])
-    const base = path.basename(src)
-    const ext = path.extname(src)
-    let newName = getRandName(ext === '.png' ? fakePngExt : ext)
-    renameIgnore.includes(ext) && (newName = base)
-    const dest = path.resolve(encryptedDir, newName)
-    const encrypted = encryptFile(src, algorithm, encryptKey, iv)
-    fse.outputFileSync(dest, encrypted)
-    encryptNames.push(newName)
-    console.log(`${base} => ${newName}`)
+    if (fse.existsSync(src)) { // 检测文件是否存在
+      const base = path.basename(src)
+      const ext = path.extname(src)
+      let newName = getRandName(ext === '.png' ? fakePngExt : ext)
+      renameIgnore.includes(ext) && (newName = base)
+      const dest = path.resolve(encryptedDir, newName)
+      const encrypted = encryptFile(src, algorithm, encryptKey, iv)
+      fse.outputFileSync(dest, encrypted)
+      encryptNames.push(newName)
+      console.log(`${base} => ${newName}`)
 
-    const newPath = dest.slice(encryptedDir.length + 1)
-    versionObj[key] = newPath.split('.')[0] + ext
+      const newPath = dest.slice(encryptedDir.length + 1)
+      versionObj[key] = newPath.split('.')[0] + ext
+    }
   })
 
   const versionName = getRandName('.json')
@@ -84,8 +86,6 @@ function decryptAsserts () {
   })
   const versionFP = path.resolve(decryptDir, versionFileName)
   fse.renameSync(path.resolve(decryptDir, encryptNames[0]), versionFP)
-  // const versionObj = fse.readJSONSync(versionFP)
-  // console.log(versionObj)
 }
 
 /**
