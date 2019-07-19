@@ -6,7 +6,8 @@
     "outputDir": "../release/web67",
     "decryptDir": "../release/web68",
     "namesFile": "cfg",
-    "nameLib1": ["apple", "banana", "strawberry", "blueberry", "cherry", "chestnut", "coconut", "pear", "pineapple"],
-    "nameLib2":["cranberry", "durian", "fig", "peach", "grape", "lemon", "longan", "mango", "melon", "orange", "papaya"],
+    "renameIgnore": [".js", ".html"],
+    "nameLib1": ["bottle", "desk", "lamp", "rope", "shelf", "soap", "sofa", "stick", "towel", "golf", "bridge", "shirt", "boat", "pink", "penguin", "penguin", "volleyball"],
+    "nameLib2":["apple", "banana", "strawberry", "blueberry", "cherry", "chestnut", "coconut", "pear", "pineapple", "cranberry", "durian", "fig", "peach", "grape", "lemon", "longan", "mango", "melon", "orange", "papaya"],
     "confusionRatio": 0.35
 }

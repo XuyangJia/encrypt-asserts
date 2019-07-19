@@ -2,10 +2,11 @@ const path = require('path')
 const fse = require('fs-extra')
 const { encryptFile, decryptFile, aesEncrypt } = require('../lib/cryptoUtils')
 const shuffle = require('../lib/shuffle')
-const { algorithm, encryptKey, iv, inputDir, outputDir, decryptDir, namesFile, nameLib1, nameLib2, confusionRatio } = fse.readJSONSync('./encrypt_cfg.json')
+const { algorithm, encryptKey, iv, inputDir, outputDir, decryptDir, namesFile, nameLib1, nameLib2, confusionRatio, renameIgnore } = fse.readJSONSync('./encrypt_cfg.json')
 const sourceDir = path.resolve(inputDir)
 const encryptedDir = path.resolve(outputDir)
 const versionFileName = 'version.json'
+const fakePngExt = '.zzz'
 let suffix = Date.now()
 let encryptNames = []
 
@@ -47,13 +48,16 @@ function encryptAsserts () {
     const src = path.resolve(sourceDir, versionObj[key])
     const base = path.basename(src)
     const ext = path.extname(src)
-    const newName = getRandName(ext === '.png' ? '.zzz' : ext)
+    let newName = getRandName(ext === '.png' ? fakePngExt : ext)
+    renameIgnore.includes(ext) && (newName = base)
     const dest = path.resolve(encryptedDir, newName)
     const encrypted = encryptFile(src, algorithm, encryptKey, iv)
-    console.log(`${base} => ${newName}`)
     fse.outputFileSync(dest, encrypted)
     encryptNames.push(newName)
-    versionObj[key] = dest.slice(encryptedDir.length + 1)
+    console.log(`${base} => ${newName}`)
+
+    const newPath = dest.slice(encryptedDir.length + 1)
+    versionObj[key] = newPath.split('.')[0] + ext
   })
 
   const versionName = getRandName('.json')
@@ -71,8 +75,9 @@ function decryptAsserts () {
   fse.emptyDirSync(decryptDir)
   encryptNames = JSON.parse(decryptFile(path.resolve(encryptedDir, namesFile), algorithm, encryptKey, iv).toString())
   encryptNames.forEach(name => {
+    const ext = path.extname(name)
     const src = path.resolve(encryptedDir, name)
-    const dest = path.resolve(decryptDir, name)
+    const dest = path.resolve(decryptDir, ext === fakePngExt ? (path.basename(name, ext) + '.png') : name)
     console.log(`还原文件 => ${name}`)
     const decrypted = decryptFile(src, algorithm, encryptKey, iv)
     fse.outputFileSync(dest, decrypted)
