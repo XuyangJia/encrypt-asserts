@@ -4,12 +4,17 @@
     "iv": "0123456789ABCDEF",
     "namesFile": "cfg",
     "versionFile": "version.json",
-    "fakePngExt": ".zzz",
     "inputDir": "../release/web66",
     "outputDir": "../release/web67",
     "decryptDir": "../release/web68",
-    "renameIgnore": [".js", ".html"],
-    "nameLib1": ["bottle", "desk", "lamp", "rope", "shelf", "soap", "sofa", "stick", "towel", "golf", "bridge", "shirt", "boat", "pink", "penguin", "penguin", "volleyball"],
-    "nameLib2":["apple", "banana", "strawberry", "blueberry", "cherry", "chestnut", "coconut", "pear", "pineapple", "cranberry", "durian", "fig", "peach", "grape", "lemon", "longan", "mango", "melon", "orange", "papaya"],
-    "confusionRatio": 0.35
+    "encryptIgnore": ["index.html"],
+    "renameIgnore": [".html", ".js"],
+    "confusionRatio": 0.35,
+    "dirMap": {
+        "imgs": [".jpg", ".png"],
+        "music": [".aac", ".mp3", ".ogg", ".m4a"],
+        "font": [".fnt", ".ttf", ".woff", ".woff2", ".eot"],
+        "animation": [".ani"],
+        "particle": [".part"]
+    }
 }

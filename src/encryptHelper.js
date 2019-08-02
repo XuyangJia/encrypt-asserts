@@ -1,12 +1,34 @@
+require('colors')
 const path = require('path')
 const fse = require('fs-extra')
-const { encryptFile, decryptFile, aesEncrypt } = require('../lib/cryptoUtils')
+const compressing = require('compressing')
+const { aesEncrypt, aesDecrypt } = require('../lib/cryptoUtils')
 const shuffle = require('../lib/shuffle')
-const { algorithm, encryptKey, iv, inputDir, outputDir, decryptDir, namesFile, nameLib1, nameLib2, confusionRatio, renameIgnore, versionFile, fakePngExt } = fse.readJSONSync('./encrypt_cfg.json')
+const { algorithm, encryptKey, iv, inputDir, outputDir, decryptDir, namesFile, confusionRatio, encryptIgnore, renameIgnore, versionFile, dirMap } = fse.readJSONSync('./encrypt_cfg.json')
 const sourceDir = path.resolve(inputDir)
 const encryptedDir = path.resolve(outputDir)
 let suffix = Date.now()
 let encryptNames = []
+let dirObj = {}
+
+// 加密数据
+const encrypter = data => aesEncrypt(data, algorithm, encryptKey, iv)
+// 解密数据
+const decrypter = data => aesDecrypt(data, algorithm, encryptKey, iv)
+// 加密文件
+const encryptFile = fp => encrypter(fse.readFileSync(fp))
+// 解密文件
+const decryptFile = fp => decrypter(fse.readFileSync(fp))
+
+const nameLib = fse.readFileSync(path.resolve(__dirname, '../nameLib.txt')).toString().split(' ')
+
+// 转换映射表
+for (const key in dirMap) {
+  const types = dirMap[key]
+  types.forEach(type => {
+    dirObj[type] = key
+  })
+}
 
 /**
  * 根据扩展名获取新的文件名
@@ -15,9 +37,10 @@ let encryptNames = []
  */
 function getRandName (ext) {
   suffix += 10 ** 10 // 修改后缀
-  const rand1 = Math.floor(Math.random() * nameLib1.length)
-  const rand2 = Math.floor(Math.random() * nameLib2.length)
-  return `${nameLib1[rand1]}_${nameLib2[rand2]}_${suffix.toString(36)}${ext}`
+  const dir = dirObj[ext] ? dirObj[ext] : 'other'
+  const rand = Math.floor(Math.random() * nameLib.length)
+  const name = `${nameLib[rand]}_${suffix.toString(36)}${ext}`
+  return path.join(dir, name)
 }
 
 /**
@@ -30,8 +53,8 @@ function insertConfusionFiles (names) {
     const src = path.resolve(encryptedDir, name)
     const newName = getRandName(path.extname(src))
     const dest = path.resolve(encryptedDir, newName)
-    const encrypted = encryptFile(src, algorithm, encryptKey, iv)
-    console.log(`插入混淆文件 => ${newName}`)
+    const encrypted = encryptFile(src)
+    console.log(`插入混淆文件 => ${newName}`.random)
     fse.outputFileSync(dest, encrypted)
   })
 }
@@ -47,23 +70,26 @@ function encryptFiles () {
     if (fse.existsSync(src)) { // 检测文件是否存在
       const base = path.basename(src)
       const ext = path.extname(src)
-      let newName = getRandName(ext === '.png' ? fakePngExt : ext)
+      let newName = getRandName(ext)
       renameIgnore.includes(ext) && (newName = base)
       const dest = path.resolve(encryptedDir, newName)
-      const encrypted = encryptFile(src, algorithm, encryptKey, iv)
-      fse.outputFileSync(dest, encrypted)
-      encryptNames.push(newName)
-      console.log(`${base} => ${newName}`)
+      if (encryptIgnore.includes(base)) {
+        fse.copyFileSync(src, dest)
+      } else {
+        const encrypted = encryptFile(src)
+        fse.outputFileSync(dest, encrypted)
+        encryptNames.push(newName)
+        console.log(`正在加密 ${base} => ${newName}`.green)
+      }
 
       const newPath = dest.slice(encryptedDir.length + 1)
       versionObj[key] = newPath.split('.')[0] + ext
     }
   })
 
-  const versionName = getRandName(path.extname(versionFile))
-  encryptNames.unshift(versionName)
-  fse.outputFileSync(path.resolve(encryptedDir, versionName), aesEncrypt(JSON.stringify(versionObj), algorithm, encryptKey, iv))
-  fse.outputFileSync(path.resolve(encryptedDir, namesFile), aesEncrypt(JSON.stringify(encryptNames), algorithm, encryptKey, iv))
+  const versionName = versionFile
+  fse.outputFileSync(path.resolve(encryptedDir, versionName), encrypter(JSON.stringify(versionObj)))
+  fse.outputFileSync(path.resolve(encryptedDir, namesFile), encrypter(JSON.stringify(encryptNames)))
 
   insertConfusionFiles(encryptNames)
 }
@@ -73,17 +99,27 @@ function encryptFiles () {
  */
 function decryptFiles () {
   fse.emptyDirSync(decryptDir)
-  encryptNames = JSON.parse(decryptFile(path.resolve(encryptedDir, namesFile), algorithm, encryptKey, iv).toString())
+  encryptNames = JSON.parse(decryptFile(path.resolve(encryptedDir, namesFile)).toString())
   encryptNames.forEach(name => {
-    const ext = path.extname(name)
     const src = path.resolve(encryptedDir, name)
-    const dest = path.resolve(decryptDir, ext === fakePngExt ? (path.basename(name, ext) + '.png') : name)
-    console.log(`还原文件 => ${name}`)
-    const decrypted = decryptFile(src, algorithm, encryptKey, iv)
+    const dest = path.resolve(decryptDir, name)
+    console.log(`还原文件 ${name} => ${dest}`.underline.cyan)
+    const decrypted = decryptFile(src)
     fse.outputFileSync(dest, decrypted)
   })
-  const versionFP = path.resolve(decryptDir, versionFile)
-  fse.renameSync(path.resolve(decryptDir, encryptNames[0]), versionFP)
+  fse.outputFileSync(path.resolve(decryptDir, versionFile), decryptFile(path.resolve(encryptedDir, versionFile)))
+  fse.copyFileSync(path.resolve(encryptedDir, 'index.html'), path.resolve(decryptDir, 'index.html'))
+}
+
+function zip () {
+  console.log('\n>>> 开始压缩 <<<'.yellow)
+  compressing.zip.compressDir(encryptedDir, `${outputDir}.zip`)
+    .then(() => {
+      console.log('压缩成功'.rainbow)
+    })
+    .catch(err => {
+      console.error(err)
+    })
 }
 
 /**
@@ -92,12 +128,13 @@ function decryptFiles () {
  * @param {String} newPath 加密后文件位置
  */
 function encryptSingleFile (oldPath, newPath) {
-  const encrypted = encryptFile(oldPath, algorithm, encryptKey, iv)
+  const encrypted = encryptFile(oldPath)
   fse.outputFileSync(newPath, encrypted)
 }
 
 module.exports = {
   encryptFiles,
   decryptFiles,
+  zip,
   encryptSingleFile
 }

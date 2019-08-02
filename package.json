@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "node index.js",
+    "start": "node index.js -e",
     "test": "node ./test/index.js",
     "fix": "standard --fix"
   },
@@ -13,7 +13,9 @@
     "url": "https://github.com/XuyangJia/encrypt-asserts.git"
   },
   "dependencies": {
+    "colors": "^1.3.3",
     "commander": "^2.20.0",
+    "compressing": "^1.4.0",
     "fs-extra": "^8.1.0"
   }
 }
