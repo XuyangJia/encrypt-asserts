@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "node index.js -e",
+    "start": "node index.js",
     "test": "node ./test/index.js",
     "fix": "standard --fix"
   },

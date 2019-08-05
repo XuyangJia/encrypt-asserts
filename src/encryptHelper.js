@@ -4,12 +4,13 @@ const fse = require('fs-extra')
 const compressing = require('compressing')
 const { aesEncrypt, aesDecrypt } = require('../lib/cryptoUtils')
 const shuffle = require('../lib/shuffle')
-const { algorithm, encryptKey, iv, inputDir, outputDir, decryptDir, namesFile, confusionRatio, encryptIgnore, renameIgnore, versionFile, dirMap } = fse.readJSONSync('./encrypt_cfg.json')
+const { algorithm, encryptKey, iv, inputDir, outputDir, decryptDir, namesFile, confusionRatio, encryptIgnore, renameIgnore, versionFile, dirMap, minFilesNum, maxDirNum } = require('./encrypt_cfg.js')
 const sourceDir = path.resolve(inputDir)
 const encryptedDir = path.resolve(outputDir)
-let suffix = Date.now()
 let encryptNames = []
 let dirObj = {}
+let dirNameObj = {}
+let numberObj = {} // 重名的增加编号
 
 // 加密数据
 const encrypter = data => aesEncrypt(data, algorithm, encryptKey, iv)
@@ -20,7 +21,7 @@ const encryptFile = fp => encrypter(fse.readFileSync(fp))
 // 解密文件
 const decryptFile = fp => decrypter(fse.readFileSync(fp))
 
-const nameLib = fse.readFileSync(path.resolve(__dirname, '../nameLib.txt')).toString().split(' ')
+const nameLib = shuffle(fse.readFileSync(path.resolve(__dirname, './nameLib.txt')).toString().split(' '))
 
 // 转换映射表
 for (const key in dirMap) {
@@ -30,17 +31,32 @@ for (const key in dirMap) {
   })
 }
 
+// 获取一级目录名
+const getDirName = ext => {
+  const primaryDir = dirObj[ext] ? dirObj[ext] : 'others'
+  const dirNames = dirNameObj[primaryDir]
+  if (Array.isArray(dirNames)) {
+    return path.join(primaryDir, dirNames[Math.floor(Math.random() * dirNames.length)])
+  }
+  return primaryDir
+}
+
 /**
  * 根据扩展名获取新的文件名
  * @param {String} ext 扩展名
  * @return {String} 新的文件名
  */
 function getRandName (ext) {
-  suffix += 10 ** 10 // 修改后缀
-  const dir = dirObj[ext] ? dirObj[ext] : 'other'
+  const dir = getDirName(ext)
   const rand = Math.floor(Math.random() * nameLib.length)
-  const name = `${nameLib[rand]}_${suffix.toString(36)}${ext}`
-  return path.join(dir, name)
+  let name = path.join(dir, nameLib[rand])
+  if (numberObj[name]) {
+    numberObj[name] += 1
+    name = `${name}_${numberObj[name]}`
+  } else {
+    numberObj[name] = 1
+  }
+  return name + ext
 }
 
 /**
@@ -60,11 +76,56 @@ function insertConfusionFiles (names) {
 }
 
 /**
+ * 生成加密文件存放目录
+ * @param {*} versionObj
+ */
+function createDirectorys (versionObj) {
+  const numCounter = {}
+  Object.keys(versionObj).forEach(key => {
+    const src = path.resolve(sourceDir, versionObj[key])
+    if (fse.existsSync(src)) { // 检测文件是否存在
+      const ext = path.extname(src)
+      const dirName = getDirName(ext)
+      if (numCounter[dirName]) {
+        numCounter[dirName] += 1
+      } else {
+        numCounter[dirName] = 1
+      }
+    }
+  })
+
+  const maxFilesNum = Math.max(...Object.values(numCounter))
+  let ratio
+  if (maxFilesNum >= minFilesNum * maxDirNum) {
+    ratio = maxFilesNum / Math.pow(maxDirNum, 2)
+  } else {
+    ratio = Math.round(maxFilesNum / minFilesNum)
+  }
+
+  for (const key in numCounter) {
+    const filesNum = numCounter[key]
+    if (filesNum >= minFilesNum) {
+      const dirNum = Math.round(Math.sqrt(filesNum / ratio))
+      if (nameLib.length >= dirNum) {
+        dirNameObj[key] = nameLib.splice(0, dirNum)
+      } else {
+        console.warn('名字库数量不足, 请立即补充！！！'.red)
+      }
+    }
+  }
+}
+
+/**
  * 加密资源
  */
 function encryptFiles () {
   const versionObj = fse.readJSONSync(path.resolve(sourceDir, versionFile))
   fse.emptyDirSync(encryptedDir)
+
+  // 生成目录
+  createDirectorys(versionObj)
+
+  // 加密文件
   Object.keys(versionObj).forEach(key => {
     const src = path.resolve(sourceDir, versionObj[key])
     if (fse.existsSync(src)) { // 检测文件是否存在

@@ -1,3 +1,3 @@
 # encrypt-asserts
 ## Usage
-  $ npm start -h 查看帮助
+  $ node index.js -h 查看帮助
