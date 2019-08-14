@@ -135,7 +135,7 @@ function encryptFiles () {
       renameIgnore.includes(ext) && (newName = base)
       const dest = path.resolve(encryptedDir, newName)
       if (encryptIgnore.includes(base) || !needEncrypt) {
-        needEncrypt || console.log(`无需加密  ${src}  ${dest}`.green)
+        needEncrypt || console.log(`无需加密 ${src} => ${dest}`.green)
         fse.ensureFileSync(dest)
         fse.copyFileSync(src, dest)
       } else {
