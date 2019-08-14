@@ -2,7 +2,7 @@ const program = require('commander')
 const { encryptFiles, decryptFiles, zip } = require('./src/encryptHelper')
 program
   .version('1.0.0')
-  .description('Encrypt and decrypt asserts.')
+  .description('Encrypt and decrypt sg project.')
   .option('-e, --encrypt', '加密资源')
   .option('-d, --decrypt', '解密资源')
   .option('-z, --zip', '压缩加密目录')
