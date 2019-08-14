@@ -4,7 +4,7 @@ const fse = require('fs-extra')
 const compressing = require('compressing')
 const { aesEncrypt, aesDecrypt } = require('../lib/cryptoUtils')
 const shuffle = require('../lib/shuffle')
-const { algorithm, encryptKey, iv, inputDir, outputDir, decryptDir, namesFile, confusionRatio, encryptIgnore, renameIgnore, versionFile, dirMap, minFilesNum, maxDirNum } = require('./encrypt_cfg.js')
+const { needEncrypt, algorithm, encryptKey, iv, inputDir, outputDir, decryptDir, namesFile, confusionRatio, encryptIgnore, renameIgnore, versionFile, dirMap, minFilesNum, maxDirNum } = require('./encrypt_cfg.js')
 const sourceDir = path.resolve(inputDir)
 const encryptedDir = path.resolve(outputDir)
 let encryptNames = []
@@ -134,7 +134,9 @@ function encryptFiles () {
       let newName = getRandName(ext)
       renameIgnore.includes(ext) && (newName = base)
       const dest = path.resolve(encryptedDir, newName)
-      if (encryptIgnore.includes(base)) {
+      if (encryptIgnore.includes(base) || !needEncrypt) {
+        needEncrypt || console.log(`无需加密  ${src}  ${dest}`.green)
+        fse.ensureFileSync(dest)
         fse.copyFileSync(src, dest)
       } else {
         const encrypted = encryptFile(src)
@@ -149,8 +151,12 @@ function encryptFiles () {
   })
 
   const versionName = versionFile
-  fse.outputFileSync(path.resolve(encryptedDir, versionName), encrypter(JSON.stringify(versionObj)))
-  fse.outputFileSync(path.resolve(encryptedDir, namesFile), encrypter(JSON.stringify(encryptNames)))
+  if (needEncrypt) {
+    fse.outputFileSync(path.resolve(encryptedDir, versionName), encrypter(JSON.stringify(versionObj)))
+    fse.outputFileSync(path.resolve(encryptedDir, namesFile), encrypter(JSON.stringify(encryptNames)))
+  } else {
+    fse.outputFileSync(path.resolve(encryptedDir, versionName), JSON.stringify(versionObj))
+  }
 
   insertConfusionFiles(encryptNames)
 }
