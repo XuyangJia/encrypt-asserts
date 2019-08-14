@@ -69,9 +69,14 @@ function insertConfusionFiles (names) {
     const src = path.resolve(encryptedDir, name)
     const newName = getRandName(path.extname(src))
     const dest = path.resolve(encryptedDir, newName)
-    const encrypted = encryptFile(src)
+    if (needEncrypt) {
+      const encrypted = encryptFile(src)
+      fse.outputFileSync(dest, encrypted)
+    } else {
+      fse.ensureFileSync(dest)
+      fse.copyFileSync(src, dest)
+    }
     console.log(`插入混淆文件 => ${newName}`.random)
-    fse.outputFileSync(dest, encrypted)
   })
 }
 
@@ -119,6 +124,7 @@ function createDirectorys (versionObj) {
  * 加密资源
  */
 function encryptFiles () {
+  const confusedFiles = []
   const versionObj = fse.readJSONSync(path.resolve(sourceDir, versionFile))
   fse.emptyDirSync(encryptedDir)
 
@@ -145,6 +151,7 @@ function encryptFiles () {
         console.log(`正在加密 ${base} => ${newName}`.green)
       }
 
+      encryptIgnore.includes(base) || confusedFiles.push(newName)
       const newPath = dest.slice(encryptedDir.length + 1)
       versionObj[key] = newPath.split('.')[0] + ext
     }
@@ -158,7 +165,7 @@ function encryptFiles () {
     fse.outputFileSync(path.resolve(encryptedDir, versionName), JSON.stringify(versionObj))
   }
 
-  insertConfusionFiles(encryptNames)
+  insertConfusionFiles(confusedFiles)
 }
 
 /**
